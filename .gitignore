@@ -1,0 +1,23 @@
+# Build outputs
+*.exe
+*.obj
+*.o
+*.dll
+*.pdb
+
+# Local editor and OS files
+.vscode/
+.vs/
+*.user
+*.suo
+Thumbs.db
+desktop.ini
+
+# Generated output folders
+output/
+report_render_check/
+
+# Temporary files
+*.tmp
+*.log
+~$*

@@ -1,0 +1,425 @@
+     软件开发环境搭建说明
+
+
+
+
+  项目名称：北京交通大学就餐仿真系统
+          编程语言：C/C++
+  开发工具：Visual Studio 2022、VS Code
+原型设计工具：墨刀、Pixso/即时设计、Axure RP
+           版本控制：Git
+           小组编号：17
+           撰写人：毛淞
+       日期：2026 年 3 月 26 日
+一、软件开发工具下载与安装
+
+1. Visual Studio 2022 安装
+
+Visual Studio 2022 是微软推出的集成开发环境，集代码编辑、调试、编译等
+功能于一体，是 Windows 平台开发 C/C++桌面应用的首选工具。
+下载方式：
+   访问 Visual Studio 官网下载页面
+   选择 Visual Studio 2022 Community（社区版）的“免费下载”按钮
+安装步骤：
+   1. 双击下载的安装程序（如 VisualStudioSetup.exe）启动安装
+   2. 在“工作负载”选项卡中，必须勾选“使用 C++的桌面开发”
+   3. 如需额外功能，可勾选“通用 Windows 平台开发”或“.NET 桌面开发”
+      等
+   4. 点击右侧“安装位置”选项卡，修改安装路径
+   5. 点击“安装”按钮，等待约 10-30 分钟完成安装
+   6. 安装完成后如提示重启，按提示操作
+
+
+2. Visual Studio Code 安装
+
+VS Code 是轻量级代码编辑器，支持跨平台开发，适合快速编辑和调试代码。
+下载方式：
+   访问 VS Code 官网，点击“Download”按钮
+   根据操作系统选择对应版本（Windows/Mac/Linux）
+安装步骤：
+   1. 运行安装程序，选择全英文路径（如 D:\Microsoft VS Code）
+   2. 按提示完成安装，建议勾选“添加到 PATH”选项
+   3. 安装完成后启动 VS Code
+
+
+3. Git 版本控制工具安装
+
+Git 是分布式版本控制系统，用于代码的版本管理、团队协作和代码托管。
+
+
+（1）Git 下载
+
+Windows 系统：
+   访问 Git 官网下载页面
+   点击“Download for Windows”自动下载最新版本（如 Git-2.45.0-64-bit.exe）
+macOS 系统：
+   方式一：访问 Git 官网下载 macOS 版本安装包（.dmg 文件）
+ 方式二：通过 Homebrew 安装：brew install git
+ 方 式 三 ： 安 装 Xcode Command Line Tools 时 自 动 安 装 ： xcode-select
+ --install
+
+
+（2）Git 安装步骤（Windows）
+
+ 1. 双击运行下载的安装程序
+ 2. 选择安装路径（建议全英文路径，如 D:\Git）
+ 3. 选择组件：保持默认选项，建议勾选“Git Bash Here”和“Git GUI Here”
+ 4. 选择默认编辑器：建议选择“Use Visual Studio Code as Git’s default
+    editor”
+ 5. 调整 PATH 环 境： 选择 “Git from the command line and also from
+    3rd-party software”（推荐）
+ 6. 选择 HTTPS 传输后端：选择“Use the OpenSSL library”
+ 7. 配置行结束符转换：选择“Checkout Windows-style, commit Unix-style
+    line endings”（推荐）
+ 8. 选择终端模拟器：选择“Use MinTTY”
+ 9. 其他选项：保持默认，点击“Install”完成安装
+ 10.安装完成后，在开始菜单或右键菜单中可见“Git Bash”和“Git GUI”
+    打开命令提示符或 Git Bash，输入以下命令验证安装：git --version
+
+
+4. 原型设计工具安装
+
+（1）墨刀
+
+墨刀是一款在线原型设计工具，支持网页端直接使用，无需本地安装。
+使用方式：
+  网页端：访问墨刀官网，注册账号后直接在线使用
+  桌面端（可选）：从官网下载 Windows/Mac 客户端安装
+  移动端：在应用宝或 App Store 搜索“墨刀”下载手机 APP
+特点：操作简单，适合快速原型制作，支持团队协作。
+
+
+（2）Pixso / 即时设计
+
+Pixso 和即时设计是国内主流的在线协同设计工具，功能类似 Figma，无需本地
+安装。
+Pixso 安装与使用：
+   下载方式：访问 Pixso 官网，点击“免费使用”
+   使用方式：
+        网页端：直接在浏览器中访问，注册账号即可使用
+        桌面端：从官网下载 Windows/Mac 客户端安装
+  特点：支持实时协作、矢量编辑、组件复用，适合高保真原型设计
+即时设计安装与使用：
+  下载方式：访问即时设计官网，点击“开始使用”
+  使用方式：
+      网页端：浏览器直接访问，注册账号即可使用
+      桌面端：从官网下载 Windows/Mac 客户端安装
+  特点：提供丰富的设计资源库，支持导入 Figma/Sketch 文件
+说明：Pixso 与即时设计功能相近，团队成员可根据个人偏好选择其一，保持项
+目设计工具的统一即可。
+
+
+（3）Axure RP
+
+Axure RP 是专业的原型设计工具，支持复杂的交互逻辑和条件判断，适合制作
+高保真交互原型。
+下载方式：
+   访问 Axure 官网，点击“免费试用”或“下载”
+   选择对应操作系统版本（Windows/Mac）
+安装步骤：
+   1. 运行安装程序，按提示完成安装
+   2. 安装路径建议使用全英文路径（如 D:\Axure\Axure RP 10）
+   安装完成后启动软件
+中文语言设置（如需）：
+    打开 Axure RP 安装目录，找到 lang 文件夹
+    下载中文语言包（如 default_zh-CN）放入该文件夹
+    重启软件即可显示中文界面
+
+
+二、依赖项安装与配置
+
+1. Visual Studio 2022 依赖项
+
+Visual Studio 2022 在安装时通过选择“使用 C++的桌面开发”工作负载，会自
+动安装以下必要组件：
+    MSVC 编译器（cl.exe）
+    C++标准库
+    Windows SDK
+    调试器
+
+
+2. VS Code C/C++ 开发依赖
+
+VS Code 本身是文本编辑器，需要单独安装编译器和扩展才能编译运行 C/C++代
+码。
+（1）MinGW-w64 编译器安装（Windows 系统）
+
+下载：
+       从    MinGW-w64    官 网 或          GitHub 下   载   （   推   荐
+        x86_64-15.1.0-release-posix-seh-ucrt 版本）
+安装：
+  1. 解压下载的压缩包到全英文路径（如 D:\mingw64）
+  2. 无需安装程序，解压即用
+
+
+（2）VS Code 扩展安装
+
+打开 VS Code，点击左侧扩展图标（或按 Ctrl+Shift+X），搜索并安装以下扩展：
+             扩展名称                   用途
+                      提供代码智能补全、语法高亮、调试
+C/C++（Microsoft 官方）
+                      支持
+C/C++ Themes          C/C++专用颜色主题
+C/C++ Extension Pack  扩展包集合，包含多个常用扩展
+Code Runner（可选）       快速运行代码片段
+                      增强 Git 功能，显示代码作者和提交
+GitLens（可选）
+                      历史
+
+
+3. 原型设计工具依赖说明
+
+           工具                 依赖要求                    说明
+                       浏览器或客户端，无需额           网 页 端 推 荐 使 用
+墨刀
+                       外依赖                   Chrome/Edge 浏览器
+                       浏览器或客户端，无需额
+Pixso                                        需确保网络连接正常
+                       外依赖
+                       浏览器或客户端，无需额
+即时设计                                         需确保网络连接正常
+                       外依赖
+                       需 安装 Microsoft .NET
+                                             安装程序会自动检测并
+Axure RP               Framework      4.8+
+                                             提示安装
+                       （Windows）
+
+
+三、环境变量配置
+
+1. MinGW-w64 环境变量配置（VS Code 必需）
+
+为使系统在任何路径下都能识别 MinGW 编译器，需配置环境变量：
+Windows 11 配置步骤：
+   1. 右键点击“此电脑”→“属性”
+   2. 点击“高级系统设置”→“环境变量”
+   3. 在“系统变量”中找到 Path 变量，双击打开
+   4. 点击“新建”，添加 MinGW 的 bin 目录路径（如 D:\mingw64\bin）
+   5. 点击“确定”保存
+验证配置：
+打开命令提示符（Win+R 输入 cmd），输入以下命令：
+gcc -v
+如能正常显示 GCC 版本信息，说明配置成功。
+
+
+2. Git 环境变量配置
+
+Git 安装程序通常会自动将 Git 添加到系统 PATH 中。如未自动配置或需手动配
+置，按以下步骤操作：
+Windows 配置步骤：
+   1. 右键点击“此电脑”→“属性”
+   2. 点击“高级系统设置”→“环境变量”
+   3. 在“系统变量”中找到 Path 变量，双击打开
+   4. 确认以下路径是否存在，如不存在则添加：
+         D:\Git\bin
+         D:\Git\cmd
+         D:\Git\mingw64\bin（如适用）
+   5. 点击“确定”保存
+验证配置：
+打开新的命令提示符窗口，输入：
+git --version
+
+
+3. Visual Studio 环境变量
+
+  Visual Studio 通常无需手动配置全局环境变量。
+
+
+4. VS Code C++配置
+
+在 VS Code 中配置 C++编译器路径：
+   1. 按 Ctrl+Shift+P 打开命令面板
+   2. 输入并选择“C/C++: Edit Configurations (UI)”
+   3. 在“编译器路径”中设置：
+         o Windows（MinGW）：D:/mingw64/bin/gcc.exe
+         o macOS：/usr/bin/clang
+   4. 设置“C++标准”为 c++17（项目要求）
+5. Git 全局配置
+
+安装 Git 后，需要进行全局用户配置，以便每次提交时记录作者信息：
+配置用户名和邮箱（必须）：
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+示例：
+git config --global user.name "Wang He"
+git config --global user.email "24231189@bjtu.edu.cn"
+配置默认分支名称（可选，推荐）：
+git config --global init.defaultBranch main
+配置别名（可选，提高效率）：
+git config --global alias.co checkout
+git config --global alias.br branch
+git config --global alias.st status
+git config --global alias.lg "log --oneline --graph --all"
+查看所有配置：
+git config --list
+
+
+四、Hello World 工程测试
+
+1. Visual Studio 2022 测试
+
+创建项目：
+   1. 启动 Visual Studio 2022，点击“创建新项目”
+   2. 选择“控制台应用”（Console App），语言选择 C++
+   3. 设置项目名称（如 HelloWorld）和存放路径
+   4. 点击“创建”
+编写代码：
+#include <iostream>
+using namespace std;
+int main()
+{
+cout << "Hello World!" << endl;
+return 0;
+}
+运行测试：
+    点击顶部工具栏的“本地 Windows 调试器”按钮（或按 F5）
+2. Visual Studio Code 测试
+
+创建项目文件夹：
+   1. 在本地创建一个全英文路径的文件夹（如 D:\CppProjects\HelloWorld）
+   2. 在 VS Code 中点击“文件”→“打开文件夹”，选择该文件夹
+创建源文件：
+   1. 点击资源管理器中的“新建文件”按钮
+   2. 命名为 helloworld.cpp
+   3. 输入以下测试代码：
+#include <iostream>
+using namespace std;
+int main()
+{
+cout << "Hello World from VS Code!" << endl;
+return 0;
+}
+   4. 按 Ctrl+S 保存文件
+运行代码得到预期结果，终端窗口输出“Hello World from VS Code!”
+首次运行说明：首次运行时，VS Code 会提示选择编译器，请选择：
+   Windows 系统选择 C/C++: g++ build and debug active file
+
+
+3. Git 版本控制测试
+
+初始化 Git 仓库：
+   1. 在 HelloWorld 项目目录下打开 Git Bash（右键文件夹选择“Git Bash
+      Here”）
+   2. 执行以下命令初始化仓库：
+git init
+   3. 查看状态：
+git status
+提交代码：
+   1. 添加所有文件到暂存区：
+git add .
+   2. 提交到本地仓库：
+git commit -m "Initial commit: Hello World project"
+查看提交历史：
+git log --oneline
+预期输出类似：abc1234 Initial commit: Hello World project
+关联远程仓库（可选）：
+如已创建 GitHub/Gitee/GitLab 远程仓库，执行：
+git remote add origin https://github.com/yourusername/HelloWorld.git
+git push -u origin main
+4. 原型设计工具测试
+
+（1）墨刀测试
+
+创建原型：
+ 1. 登录墨刀网页端，点击“新建项目”
+ 2. 选择“手机”或“网页”模板
+ 3. 拖拽组件设计简单界面，添加交互链接
+预览测试：
+ 点击右上角“预览”按钮，在浏览器中查看原型效果
+ 或通过手机微信扫码查看移动端效果
+ 点击预览中的按钮或区域，验证交互跳转是否正常
+
+
+（2）Pixso / 即时设计测试
+
+Pixso 测试：
+   1. 登录 Pixso 网页端，点击“新建文件”
+   2. 创建画板（如 iPhone 15 尺寸）
+   3. 使用矩形工具绘制按钮，添加文本“点击测试”
+   4. 点击“原型”选项卡，拖拽连线创建交互跳转
+   5. 点击“演示”按钮，进入演示模式测试交互
+即时设计测试：
+   1. 登录即时设计网页端，点击“新建文件”
+   2. 创建画板，拖拽组件库中的按钮组件到画板
+   3. 选择“原型”模式，设置触发事件（如点击跳转）
+   4. 点击“预览”按钮，测试交互效果
+   5. 可通过手机扫码实时预览
+
+
+（3）Axure RP 测试
+
+创建原型：
+   1. 启动 Axure RP，点击“新建文件”
+   2. 从左侧组件库拖拽“Button”和“Text Panel”到画布
+   3. 双击按钮，设置文本为“点击测试”
+   4. 选中按钮，在“交互”面板中点击“新建交互”
+   5. 选择“单击时”事件 → “设置文本” → 选择文本面板 → 设置值为
+      “Hello Axure!”
+按 F5 或点击顶部“预览”按钮，在浏览器中查看效果
+五、Git 分支管理规范
+
+项目采用以下分支策略：
+    分支                           名称                  用途
+主分支         main                              稳定版本，仅用于发布
+                                              集成开发分支，所有功能
+开发分支                   develop
+                                              合并至此
+功能分支                    feature/功能名           各模块功能开发
+修复分支                    hotfix/问题描述           紧急 Bug 修复
+分支操作示例：
+# 创建并切换到开发分支
+git checkout -b develop
+# 创建功能分支
+git checkout -b feature/crowd-generation develop
+# 提交功能代码后合并
+git checkout develop
+git merge feature/crowd-generation
+# 删除已合并的功能分支
+git branch -d feature/crowd-generation
+
+
+六、环境验证清单
+
+完成以上配置后，请逐项确认：
+C/C++开发环境：
+    Visual Studio 2022 可正常创建 C++控制台项目并运行 Hello World
+    VS Code 可正常编译运行 helloworld.cpp
+    MinGW 的 gcc -v 命令可正常输出版本信息（Windows）
+    项目文件夹路径为全英文（避免中文路径导致编译错误）
+Git 版本控制：
+    Git 已安装，git --version 可正常输出版本信息
+    已配置用户名和邮箱：git config --global user.name 和 user.email
+    可正常初始化 Git 仓库：git init
+    可正常添加文件并提交：git add .和 git commit -m "message"
+    SSH 密钥已生成并添加到远程仓库（如需远程协作）
+    项目根目录已创建.gitignore 文件并正确配置
+原型设计工具：
+    墨刀可正常创建项目并进行预览
+    Pixso 或即时设计可正常创建画板、添加交互并进行演示
+    Axure RP 可正常启动，创建页面并设置交互预览
+    团队成员明确统一一款原型工具进行设计协作
+七、团队协作建议
+
+为保持项目开发一致性，建议团队统一以下配置：
+             项目                           统一选择
+C++开发环境                       Visual Studio 2022（Windows 平台）
+代码编辑器                         VS Code（辅助编辑）
+版本控制                          Git + GitHub/Gitee
+分支策略                          Git Flow（main/develop/feature）
+提交信息格式                        [模块] 简短描述
+                              三选一统一使用（推荐 Pixso 或即时
+原型设计工具
+                              设计，支持实时协作）
+项目路径                          全英文路径，避免中文
+编码格式                          UTF-8
+                              统一配 置，禁 止上传编译 中间文 件
+.gitignore
+                              （.obj、.exe 等）
+Git 协作流程：
+   1. 每天开始工作前，先拉取最新代码：git pull origin develop
+   2. 创建功能分支进行开发：git checkout -b feature/xxx develop
+   3. 开发完成后提交并推送到远程：git push origin feature/xxx
+   4. 在 Git 平台上创建 Pull Request，请求合并到 develop 分支
+   5. 代码审查通过后，由小组长合并
+   6. 定期将 develop 分支合并到 main 分支进行版本发布
