@@ -120,11 +120,15 @@ h3 {
   padding: 14px;
   border-radius: 22px;
   background: var(--panel);
-  display: grid;
-  grid-template-rows: auto auto auto auto auto auto;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   overflow-y: auto;
   scrollbar-width: thin;
+}
+
+.dashboard > * {
+  flex: 0 0 auto;
 }
 
 .panel-title,
@@ -232,11 +236,19 @@ h3 {
 }
 
 #stateChart {
-  height: 104px;
+  height: 150px;
 }
 
 .chart-card.compact {
-  min-height: 114px;
+  min-height: 132px;
+}
+
+.window-card {
+  min-height: 154px;
+}
+
+.state-card {
+  min-height: 208px;
 }
 
 .card-heading {

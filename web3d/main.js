@@ -14,15 +14,15 @@ scene.background = new THREE.Color(0xdbe7f4);
 scene.fog = new THREE.Fog(0xdbe7f4, 68, 132);
 
 const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 220);
-camera.position.set(30, 32, 42);
+camera.position.set(34, 40, 54);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0, 1.8);
+controls.target.set(-1.5, 2.6, 0.8);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.maxPolarAngle = Math.PI * 0.47;
 controls.minDistance = 18;
-controls.maxDistance = 88;
+controls.maxDistance = 104;
 controls.panSpeed = 0.55;
 
 const raycaster = new THREE.Raycaster();
@@ -59,6 +59,7 @@ const colors = {
 };
 
 const layout = {
+  upperFloorY: 6.2,
   entrance: new THREE.Vector3(-27, 0, 12),
   pickup: new THREE.Vector3(-10, 0, -1),
   exit: new THREE.Vector3(28, 0, 12),
@@ -113,6 +114,24 @@ function roundedBox(width, height, depth, color) {
 function addBox(width, height, depth, color, position, parent = groups.static) {
   const mesh = roundedBox(width, height, depth, color);
   mesh.position.copy(position);
+  parent.add(mesh);
+  return mesh;
+}
+
+function addGlassBox(width, height, depth, color, position, opacity = 0.48, parent = groups.static) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, depth),
+    new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.34,
+      metalness: 0.02,
+      transparent: true,
+      opacity,
+    })
+  );
+  mesh.position.copy(position);
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
   parent.add(mesh);
   return mesh;
 }
@@ -197,6 +216,11 @@ function buildCafeteria() {
   addBox(64, 2.2, 0.55, colors.wall, new THREE.Vector3(0, 1.1, 18.2));
   addBox(0.55, 2.2, 36, colors.wall, new THREE.Vector3(-32.2, 1.1, 0));
   addBox(0.55, 2.2, 36, colors.wall, new THREE.Vector3(32.2, 1.1, 0));
+  addBox(62.8, 0.16, 0.38, 0x8fb3d9, new THREE.Vector3(0, 0.12, -18.35));
+  addBox(62.8, 0.16, 0.38, 0x8fb3d9, new THREE.Vector3(0, 0.12, 18.35));
+  addBox(0.38, 0.16, 36.2, 0x8fb3d9, new THREE.Vector3(-32.35, 0.12, 0));
+  addBox(0.38, 0.16, 36.2, 0x8fb3d9, new THREE.Vector3(32.35, 0.12, 0));
+  buildSecondFloor();
 
   addBox(6, 0.18, 5.4, 0xdff7ec, new THREE.Vector3(layout.entrance.x, 0.02, layout.entrance.z));
   addBox(6, 0.18, 5.4, 0xffeadf, new THREE.Vector3(layout.exit.x, 0.02, layout.exit.z));
@@ -205,6 +229,8 @@ function buildCafeteria() {
 
   addLabel("入口", new THREE.Vector3(layout.entrance.x, 3.2, layout.entrance.z), 0.65, "#166534");
   addLabel("出口", new THREE.Vector3(layout.exit.x, 3.2, layout.exit.z), 0.65, "#9a3412");
+  addLabel("一层底板", new THREE.Vector3(-25, 3.2, 16.4), 0.55, "#0f766e");
+  addLabel("一层取餐区", new THREE.Vector3(-18, 4.2, -15.5), 0.58, "#1d4ed8");
   addLabel("等座区", new THREE.Vector3(layout.waitingBase.x, 2.6, layout.waitingBase.z + 2.6), 0.55, "#854d0e");
   addLabel("休息区", new THREE.Vector3(layout.rest.x, 2.6, layout.rest.z + 3.6), 0.55, "#1d4ed8");
 
@@ -230,23 +256,59 @@ function buildCafeteria() {
   makeSeats("A", -2, -12, 3, 5, 0xcee4ff);
   makeSeats("B", -2, 0, 3, 5, 0xd6f5e7);
   makeSeats("C", 14, -10, 4, 4, 0xe4d8ff);
+  makeSeats("D", 6, -7.5, 3, 5, 0xffedd5, layout.upperFloorY);
+  makeSeats("E", 18, 1.5, 3, 4, 0xdbeafe, layout.upperFloorY);
 
   addLabel("A 区 近窗口", new THREE.Vector3(3.4, 3, -14.5), 0.5, "#1d4ed8");
   addLabel("B 区 安静区", new THREE.Vector3(3.4, 3, -2.5), 0.5, "#047857");
   addLabel("C 区 大桌区", new THREE.Vector3(19.5, 3, -12.5), 0.5, "#6d28d9");
+  addLabel("二层复制楼板", new THREE.Vector3(18, layout.upperFloorY + 3.1, -10.4), 0.58, "#1e40af");
 }
 
-function makeSeats(zone, startX, startZ, rows, cols, matColor) {
+function buildSecondFloor() {
+  const y = layout.upperFloorY;
+  const cx = 16;
+  const cz = 0.5;
+  const w = 36;
+  const d = 28;
+  addGlassBox(w, 0.42, d, 0xeaf4ff, new THREE.Vector3(cx, y - 0.12, cz), 0.36);
+  addGlassBox(15, 0.08, 11, 0xfff7ed, new THREE.Vector3(12, y + 0.08, -5.8), 0.42);
+  addGlassBox(15, 0.08, 11, 0xe0f2fe, new THREE.Vector3(23, y + 0.09, 6.2), 0.42);
+  addBox(w + 0.7, 0.2, 0.42, 0x64748b, new THREE.Vector3(cx, y + 1.08, cz - d / 2));
+  addBox(w + 0.7, 0.2, 0.42, 0x64748b, new THREE.Vector3(cx, y + 1.08, cz + d / 2));
+  addBox(0.42, 0.2, d, 0x64748b, new THREE.Vector3(cx - w / 2, y + 1.08, cz));
+  addBox(0.42, 0.2, d, 0x64748b, new THREE.Vector3(cx + w / 2, y + 1.08, cz));
+
+  for (let i = 0; i < 7; i += 1) {
+    addBox(0.36, 1.2, 0.36, 0x475569, new THREE.Vector3(cx - w / 2 + 3 + i * 5, y + 0.56, cz - d / 2));
+    addBox(0.36, 1.2, 0.36, 0x475569, new THREE.Vector3(cx - w / 2 + 3 + i * 5, y + 0.56, cz + d / 2));
+  }
+  for (let i = 0; i < 4; i += 1) {
+    addBox(0.34, 6.15, 0.34, 0x94a3b8, new THREE.Vector3(cx - w / 2 + 4 + i * 10, y / 2, cz + d / 2 - 1.6));
+    addBox(0.34, 6.15, 0.34, 0x94a3b8, new THREE.Vector3(cx - w / 2 + 4 + i * 10, y / 2, cz - d / 2 + 1.6));
+  }
+
+  for (let i = 0; i < 11; i += 1) {
+    const stepY = 0.24 + i * 0.52;
+    const stepX = 21.5 + i * 0.72;
+    const stepZ = 14.2 - i * 0.78;
+    addBox(1.25, 0.22, 3.2, 0xcbd5e1, new THREE.Vector3(stepX, stepY, stepZ));
+  }
+  addBox(9.8, 0.18, 0.32, 0x64748b, new THREE.Vector3(25.2, 3.25, 9.9));
+  addLabel("楼梯上二层", new THREE.Vector3(26.5, 3.2, 11.5), 0.45, "#475569");
+}
+
+function makeSeats(zone, startX, startZ, rows, cols, matColor, floorY = 0) {
   for (let r = 0; r < rows; r += 1) {
     for (let c = 0; c < cols; c += 1) {
       const x = startX + c * 2.7;
       const z = startZ + r * 2.8;
-      const table = addBox(1.65, 0.32, 1.1, 0xf8fafc, new THREE.Vector3(x, 0.58, z));
+      const table = addBox(1.65, 0.32, 1.1, 0xf8fafc, new THREE.Vector3(x, floorY + 0.58, z));
       table.material = makeMaterial(0xfafafa, 0.44);
-      const seat = addBox(1.05, 0.36, 0.9, matColor, new THREE.Vector3(x, 0.33, z + 1.05));
+      const seat = addBox(1.05, 0.36, 0.9, matColor, new THREE.Vector3(x, floorY + 0.33, z + 1.05));
       seat.userData.baseColor = matColor;
       seat.userData.zone = zone;
-      layout.seats.push({ zone, pos: new THREE.Vector3(x, 0, z + 1.05), mesh: seat, occupant: null });
+      layout.seats.push({ zone, pos: new THREE.Vector3(x, floorY, z + 1.05), mesh: seat, occupant: null, floorY });
     }
   }
 }
@@ -297,7 +359,7 @@ function resetSimulation() {
   layout.seats.forEach((seat) => {
     seat.occupant = null;
     seat.mesh.material.color.setHex(seat.mesh.userData.baseColor);
-    seat.mesh.position.y = 0.33;
+    seat.mesh.position.y = seat.floorY + 0.33;
   });
   sim.students.forEach((student) => groups.dynamic.remove(student.mesh));
   sim.students.length = 0;
@@ -386,7 +448,7 @@ function seedInitialCrowd() {
     });
     seat.occupant = student;
     seat.mesh.material.color.setHex(0x54a3ff);
-    seat.mesh.position.y = 0.48;
+    seat.mesh.position.y = seat.floorY + 0.48;
   }
 
   for (let i = 0; i < 3; i += 1) {
@@ -461,7 +523,7 @@ function assignSeat(student) {
   student.state = "toSeat";
   student.target = seat.pos.clone();
   seat.mesh.material.color.setHex(0x54a3ff);
-  seat.mesh.position.y = 0.48;
+  seat.mesh.position.y = seat.floorY + 0.48;
 }
 
 function updateSimulation(dt) {
@@ -497,7 +559,7 @@ function updateSimulation(dt) {
         if (seat) {
           seat.occupant = null;
           seat.mesh.material.color.setHex(seat.mesh.userData.baseColor);
-          seat.mesh.position.y = 0.33;
+          seat.mesh.position.y = seat.floorY + 0.33;
         }
         if (Math.random() < 0.35) {
           student.state = "resting";
@@ -801,25 +863,40 @@ function drawStateChart(canvas, states) {
     ["离开", states.leaving, "#ef4444"],
   ];
   const total = Math.max(1, entries.reduce((sum, item) => sum + item[1], 0));
-  let x = 24;
-  entries.forEach(([label, value, color]) => {
-    const w = (width - 48) * value / total;
-    if (w > 0) {
-      ctx.fillStyle = color;
-      roundRect2d(ctx, x, 26, Math.max(8, w), 30, 12);
-      ctx.fill();
-    }
-    x += w;
+  const cx = 78;
+  const cy = height / 2;
+  const radius = Math.min(54, height * 0.36);
+  const inner = radius * 0.56;
+  let angle = -Math.PI / 2;
+  ctx.lineWidth = radius - inner;
+  ctx.lineCap = "round";
+  entries.forEach(([, value, color]) => {
+    if (value <= 0) return;
+    const slice = (Math.PI * 2 * value) / total;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, (radius + inner) / 2, angle + 0.03, angle + slice - 0.03);
+    ctx.stroke();
+    angle += slice;
   });
+  ctx.fillStyle = "#172033";
+  ctx.font = "800 20px Microsoft YaHei UI";
+  ctx.textAlign = "center";
+  ctx.fillText(total, cx, cy + 4);
+  ctx.fillStyle = "#738096";
+  ctx.font = "11px Microsoft YaHei UI";
+  ctx.fillText("在场", cx, cy + 22);
+
   entries.forEach(([label, value, color], index) => {
-    const lx = 28 + (index % 3) * 190;
-    const ly = 88 + Math.floor(index / 3) * 34;
+    const lx = 158 + (index % 2) * 100;
+    const ly = 34 + Math.floor(index / 2) * 36;
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(lx, ly - 4, 6, 0, Math.PI * 2);
+    ctx.arc(lx, ly - 4, 5, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#172033";
-    ctx.font = "13px Microsoft YaHei UI";
+    ctx.font = "700 12px Microsoft YaHei UI";
+    ctx.textAlign = "left";
     ctx.fillText(`${label} ${value}`, lx + 14, ly);
   });
 }
@@ -850,8 +927,8 @@ function bindUi() {
   });
   ui.cameraBtn.addEventListener("click", () => {
     const top = camera.position.y < 55;
-    camera.position.set(top ? 0 : 30, top ? 66 : 32, top ? 0.1 : 42);
-    controls.target.set(0, 0, 0);
+    camera.position.set(top ? 0 : 34, top ? 78 : 40, top ? 0.1 : 54);
+    controls.target.set(top ? 1 : -1.5, top ? 2.4 : 2.6, top ? 1 : 0.8);
     controls.update();
     ui.cameraBtn.textContent = top ? "透视" : "俯视";
   });
