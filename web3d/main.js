@@ -612,34 +612,128 @@ function prepCanvas(canvas) {
 
 function drawTrend(canvas, history) {
   const { ctx, width, height } = prepCanvas(canvas);
-  const pad = 28;
-  ctx.strokeStyle = "rgba(115,128,150,.18)";
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 4; i += 1) {
-    const y = pad + (height - pad * 2) * i / 3;
-    ctx.beginPath();
-    ctx.moveTo(pad, y);
-    ctx.lineTo(width - pad, y);
-    ctx.stroke();
-  }
-  const max = Math.max(8, ...history.map((h) => Math.max(h.active, h.queue + h.service)));
-  drawLine(ctx, history, (h) => h.active / max, "#3b82f6", width, height, pad);
-  drawLine(ctx, history, (h) => (h.queue + h.service) / max, "#f59e0b", width, height, pad);
-  drawLine(ctx, history, (h) => h.seatRate, "#10b981", width, height, pad);
+  const top = { x: 34, y: 26, w: width - 68, h: 142 };
+  const bottom = { x: 34, y: 204, w: width - 68, h: 62 };
+  const latest = history[history.length - 1];
+  if (!latest) return;
+
+  drawPlotFrame(ctx, top, "人数趋势", "人");
+  drawPlotFrame(ctx, bottom, "座位占用率", "%");
+
+  const countValues = history.flatMap((h) => [h.active, h.queue + h.service]);
+  const minCount = Math.min(...countValues);
+  const maxCount = Math.max(...countValues);
+  const countRange = paddedRange(minCount, maxCount, 3);
+
+  drawScaledLine(ctx, history, (h) => h.active, countRange, top, "#3b82f6", 4.5);
+  drawScaledLine(ctx, history, (h) => h.queue + h.service, countRange, top, "#f59e0b", 4);
+  drawAreaLine(ctx, history, (h) => h.seatRate * 100, { min: 0, max: 100 }, bottom, "#10b981");
+
+  drawValuePill(ctx, top.x + top.w - 112, top.y + 8, "#3b82f6", `系统 ${latest.active}`);
+  drawValuePill(ctx, top.x + top.w - 112, top.y + 38, "#f59e0b", `排队+服务 ${latest.queue + latest.service}`);
+  drawValuePill(ctx, bottom.x + bottom.w - 106, bottom.y + 8, "#10b981", `占用 ${Math.round(latest.seatRate * 100)}%`);
 }
 
-function drawLine(ctx, data, value, color, width, height, pad) {
+function paddedRange(min, max, pad) {
+  if (min === max) {
+    return { min: Math.max(0, min - pad), max: max + pad };
+  }
+  const span = max - min;
+  return {
+    min: Math.max(0, Math.floor(min - span * 0.25 - 1)),
+    max: Math.ceil(max + span * 0.25 + 1),
+  };
+}
+
+function drawPlotFrame(ctx, rect, title, unit) {
+  ctx.save();
+  ctx.fillStyle = "rgba(248,251,255,.72)";
+  roundRect2d(ctx, rect.x - 12, rect.y - 16, rect.w + 24, rect.h + 28, 16);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(115,128,150,.15)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i += 1) {
+    const y = rect.y + rect.h * i / 2;
+    ctx.beginPath();
+    ctx.moveTo(rect.x, y);
+    ctx.lineTo(rect.x + rect.w, y);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#172033";
+  ctx.font = "700 13px Microsoft YaHei UI";
+  ctx.fillText(title, rect.x, rect.y - 4);
+  ctx.fillStyle = "#738096";
+  ctx.font = "11px Microsoft YaHei UI";
+  ctx.textAlign = "right";
+  ctx.fillText(unit, rect.x + rect.w, rect.y - 4);
+  ctx.restore();
+}
+
+function drawValuePill(ctx, x, y, color, text) {
+  ctx.save();
+  ctx.font = "700 12px Microsoft YaHei UI";
+  const width = ctx.measureText(text).width + 24;
+  ctx.fillStyle = "rgba(255,255,255,.92)";
+  roundRect2d(ctx, x, y, width, 23, 11);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x + 11, y + 11.5, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#172033";
+  ctx.textAlign = "left";
+  ctx.fillText(text, x + 20, y + 16);
+  ctx.restore();
+}
+
+function drawScaledLine(ctx, data, value, range, rect, color, lineWidth) {
   if (data.length < 2) return;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  data.forEach((d, index) => {
+    const x = rect.x + rect.w * index / (data.length - 1);
+    const normalized = (value(d) - range.min) / Math.max(1, range.max - range.min);
+    const y = rect.y + rect.h - rect.h * THREE.MathUtils.clamp(normalized, 0, 1);
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+function drawAreaLine(ctx, data, value, range, rect, color) {
+  if (data.length < 2) return;
+  const points = data.map((d, index) => {
+    const x = rect.x + rect.w * index / (data.length - 1);
+    const normalized = (value(d) - range.min) / Math.max(1, range.max - range.min);
+    const y = rect.y + rect.h - rect.h * THREE.MathUtils.clamp(normalized, 0, 1);
+    return { x, y };
+  });
+
+  const gradient = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
+  gradient.addColorStop(0, "rgba(16,185,129,.32)");
+  gradient.addColorStop(1, "rgba(16,185,129,.03)");
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, rect.y + rect.h);
+  points.forEach((point) => ctx.lineTo(point.x, point.y));
+  ctx.lineTo(points[points.length - 1].x, rect.y + rect.h);
+  ctx.closePath();
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
   ctx.strokeStyle = color;
   ctx.lineWidth = 4;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
-  data.forEach((d, index) => {
-    const x = pad + (width - pad * 2) * index / (data.length - 1);
-    const y = height - pad - (height - pad * 2) * THREE.MathUtils.clamp(value(d), 0, 1);
-    if (index === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+  points.forEach((point, index) => {
+    if (index === 0) ctx.moveTo(point.x, point.y);
+    else ctx.lineTo(point.x, point.y);
   });
   ctx.stroke();
 }
