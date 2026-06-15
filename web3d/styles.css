@@ -219,6 +219,22 @@ h3 {
   display: block;
 }
 
+.operations-card {
+  min-height: 352px;
+}
+
+#trendChart {
+  height: 282px !important;
+}
+
+#windowChart {
+  height: 148px;
+}
+
+#stateChart {
+  height: 126px;
+}
+
 .chart-card.compact {
   min-height: 132px;
 }

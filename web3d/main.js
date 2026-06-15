@@ -537,6 +537,7 @@ function currentMetrics() {
   };
   return {
     time: sim.time,
+    arrivals: Math.max(0, sim.nextId - 1),
     active,
     queue,
     service,
@@ -604,138 +605,190 @@ function formatTime(seconds) {
 
 function prepCanvas(canvas) {
   const ctx = canvas.getContext("2d");
-  const width = canvas.width;
-  const height = canvas.height;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const width = Math.max(1, Math.round(rect.width));
+  const height = Math.max(1, Math.round(rect.height));
+  const targetWidth = Math.round(width * dpr);
+  const targetHeight = Math.round(height * dpr);
+  if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
   return { ctx, width, height };
 }
 
 function drawTrend(canvas, history) {
   const { ctx, width, height } = prepCanvas(canvas);
-  const top = { x: 34, y: 26, w: width - 68, h: 142 };
-  const bottom = { x: 34, y: 204, w: width - 68, h: 62 };
   const latest = history[history.length - 1];
   if (!latest) return;
 
-  drawPlotFrame(ctx, top, "人数趋势", "人");
-  drawPlotFrame(ctx, bottom, "座位占用率", "%");
-
-  const countValues = history.flatMap((h) => [h.active, h.queue + h.service]);
-  const minCount = Math.min(...countValues);
-  const maxCount = Math.max(...countValues);
-  const countRange = paddedRange(minCount, maxCount, 3);
-
-  drawScaledLine(ctx, history, (h) => h.active, countRange, top, "#3b82f6", 4.5);
-  drawScaledLine(ctx, history, (h) => h.queue + h.service, countRange, top, "#f59e0b", 4);
-  drawAreaLine(ctx, history, (h) => h.seatRate * 100, { min: 0, max: 100 }, bottom, "#10b981");
-
-  drawValuePill(ctx, top.x + top.w - 112, top.y + 8, "#3b82f6", `系统 ${latest.active}`);
-  drawValuePill(ctx, top.x + top.w - 112, top.y + 38, "#f59e0b", `排队+服务 ${latest.queue + latest.service}`);
-  drawValuePill(ctx, bottom.x + bottom.w - 106, bottom.y + 8, "#10b981", `占用 ${Math.round(latest.seatRate * 100)}%`);
+  const buckets = bucketHistory(history, 16);
+  drawThroughputPanel(ctx, buckets, { x: 18, y: 20, w: width - 36, h: 106 });
+  drawWindowHeatmap(ctx, buckets, { x: 18, y: 148, w: width - 36, h: 72 });
+  drawOccupancyGauge(ctx, history, latest, { x: 18, y: height - 44, w: width - 36, h: 34 });
 }
 
-function paddedRange(min, max, pad) {
-  if (min === max) {
-    return { min: Math.max(0, min - pad), max: max + pad };
+function bucketHistory(history, bucketCount) {
+  const buckets = [];
+  const size = Math.max(1, Math.ceil(history.length / bucketCount));
+  for (let i = 0; i < history.length; i += size) {
+    const slice = history.slice(i, i + size);
+    const first = slice[0];
+    const last = slice[slice.length - 1];
+    const avgWindows = [0, 1, 2, 3].map((index) =>
+      slice.reduce((sum, sample) => sum + (sample.windows[index] || 0), 0) / slice.length
+    );
+    buckets.push({
+      arrivals: Math.max(0, last.arrivals - first.arrivals),
+      served: Math.max(0, last.served - first.served),
+      queue: slice.reduce((sum, sample) => sum + sample.queue + sample.service, 0) / slice.length,
+      seatRate: slice.reduce((sum, sample) => sum + sample.seatRate, 0) / slice.length,
+      windows: avgWindows,
+    });
   }
-  const span = max - min;
-  return {
-    min: Math.max(0, Math.floor(min - span * 0.25 - 1)),
-    max: Math.ceil(max + span * 0.25 + 1),
-  };
+  return buckets;
 }
 
-function drawPlotFrame(ctx, rect, title, unit) {
-  ctx.save();
-  ctx.fillStyle = "rgba(248,251,255,.72)";
-  roundRect2d(ctx, rect.x - 12, rect.y - 16, rect.w + 24, rect.h + 28, 16);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(115,128,150,.15)";
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 3; i += 1) {
-    const y = rect.y + rect.h * i / 2;
-    ctx.beginPath();
-    ctx.moveTo(rect.x, y);
-    ctx.lineTo(rect.x + rect.w, y);
-    ctx.stroke();
-  }
+function drawPanelLabel(ctx, title, subtitle, x, y) {
   ctx.fillStyle = "#172033";
-  ctx.font = "700 13px Microsoft YaHei UI";
-  ctx.fillText(title, rect.x, rect.y - 4);
-  ctx.fillStyle = "#738096";
-  ctx.font = "11px Microsoft YaHei UI";
-  ctx.textAlign = "right";
-  ctx.fillText(unit, rect.x + rect.w, rect.y - 4);
-  ctx.restore();
-}
-
-function drawValuePill(ctx, x, y, color, text) {
-  ctx.save();
-  ctx.font = "700 12px Microsoft YaHei UI";
-  const width = ctx.measureText(text).width + 24;
-  ctx.fillStyle = "rgba(255,255,255,.92)";
-  roundRect2d(ctx, x, y, width, 23, 11);
-  ctx.fill();
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(x + 11, y + 11.5, 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#172033";
+  ctx.font = "800 15px Microsoft YaHei UI";
   ctx.textAlign = "left";
-  ctx.fillText(text, x + 20, y + 16);
-  ctx.restore();
+  ctx.fillText(title, x, y);
+  ctx.fillStyle = "#738096";
+  ctx.font = "12px Microsoft YaHei UI";
+  ctx.fillText(subtitle, x, y + 18);
 }
 
-function drawScaledLine(ctx, data, value, range, rect, color, lineWidth) {
-  if (data.length < 2) return;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = lineWidth;
+function drawThroughputPanel(ctx, buckets, rect) {
+  drawPanelLabel(ctx, "客流节奏", "进入 / 完成 / 排队压力", rect.x, rect.y);
+  const plot = { x: rect.x, y: rect.y + 34, w: rect.w, h: rect.h - 36 };
+  const maxBar = Math.max(1, ...buckets.map((b) => Math.max(b.arrivals, b.served)));
+  const maxQueue = Math.max(1, ...buckets.map((b) => b.queue));
+  const gap = 5;
+  const groupW = plot.w / Math.max(1, buckets.length);
+  const barW = Math.max(5, (groupW - gap) / 2);
+
+  drawSoftGrid(ctx, plot, 3);
+  buckets.forEach((bucket, index) => {
+    const x = plot.x + index * groupW;
+    const inH = Math.max(bucket.arrivals > 0 ? 8 : 0, plot.h * bucket.arrivals / maxBar);
+    const servedH = Math.max(bucket.served > 0 ? 8 : 0, plot.h * bucket.served / maxBar);
+    ctx.fillStyle = "rgba(59,130,246,.82)";
+    roundRect2d(ctx, x + 1, plot.y + plot.h - inH, barW, inH, 6);
+    ctx.fill();
+    ctx.fillStyle = "rgba(139,92,246,.82)";
+    roundRect2d(ctx, x + 1 + barW, plot.y + plot.h - servedH, barW, servedH, 6);
+    ctx.fill();
+  });
+
+  ctx.strokeStyle = "#f59e0b";
+  ctx.lineWidth = 4;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.shadowColor = color;
+  ctx.shadowColor = "rgba(245,158,11,.35)";
   ctx.shadowBlur = 8;
   ctx.beginPath();
-  data.forEach((d, index) => {
-    const x = rect.x + rect.w * index / (data.length - 1);
-    const normalized = (value(d) - range.min) / Math.max(1, range.max - range.min);
-    const y = rect.y + rect.h - rect.h * THREE.MathUtils.clamp(normalized, 0, 1);
+  buckets.forEach((bucket, index) => {
+    const x = plot.x + index * groupW + groupW / 2;
+    const y = plot.y + plot.h - plot.h * bucket.queue / maxQueue;
     if (index === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   });
   ctx.stroke();
   ctx.shadowBlur = 0;
+
+  const latest = buckets[buckets.length - 1] || { arrivals: 0, served: 0, queue: 0 };
+  drawMiniBadge(ctx, rect.x + rect.w - 120, rect.y - 2, "#3b82f6", `进 ${latest.arrivals}`);
+  drawMiniBadge(ctx, rect.x + rect.w - 62, rect.y - 2, "#8b5cf6", `完 ${latest.served}`);
 }
 
-function drawAreaLine(ctx, data, value, range, rect, color) {
-  if (data.length < 2) return;
-  const points = data.map((d, index) => {
-    const x = rect.x + rect.w * index / (data.length - 1);
-    const normalized = (value(d) - range.min) / Math.max(1, range.max - range.min);
-    const y = rect.y + rect.h - rect.h * THREE.MathUtils.clamp(normalized, 0, 1);
-    return { x, y };
-  });
+function drawWindowHeatmap(ctx, buckets, rect) {
+  drawPanelLabel(ctx, "窗口压力", "深色代表拥堵，按时间从左到右", rect.x, rect.y);
+  const plot = { x: rect.x + 34, y: rect.y + 30, w: rect.w - 34, h: rect.h - 32 };
+  const maxLoad = Math.max(1, ...buckets.flatMap((bucket) => bucket.windows));
+  const cellGap = 4;
+  const cellW = (plot.w - cellGap * (buckets.length - 1)) / Math.max(1, buckets.length);
+  const cellH = (plot.h - cellGap * 3) / 4;
 
-  const gradient = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
-  gradient.addColorStop(0, "rgba(16,185,129,.32)");
-  gradient.addColorStop(1, "rgba(16,185,129,.03)");
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, rect.y + rect.h);
-  points.forEach((point) => ctx.lineTo(point.x, point.y));
-  ctx.lineTo(points[points.length - 1].x, rect.y + rect.h);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
+  for (let row = 0; row < 4; row += 1) {
+    ctx.fillStyle = "#738096";
+    ctx.font = "700 11px Microsoft YaHei UI";
+    ctx.textAlign = "right";
+    ctx.fillText(`W${row + 1}`, rect.x + 25, plot.y + row * (cellH + cellGap) + cellH * 0.72);
+    buckets.forEach((bucket, index) => {
+      const load = bucket.windows[row] || 0;
+      const ratio = load / maxLoad;
+      ctx.fillStyle = ratio > 0.66
+        ? `rgba(239,68,68,${(0.22 + ratio * 0.68).toFixed(3)})`
+        : `rgba(245,158,11,${(0.12 + ratio * 0.78).toFixed(3)})`;
+      roundRect2d(
+        ctx,
+        plot.x + index * (cellW + cellGap),
+        plot.y + row * (cellH + cellGap),
+        Math.max(2, cellW),
+        cellH,
+        4
+      );
+      ctx.fill();
+    });
+  }
+}
+
+function drawOccupancyGauge(ctx, history, latest, rect) {
+  const values = history.map((sample) => sample.seatRate * 100);
+  const min = Math.round(Math.min(...values));
+  const max = Math.round(Math.max(...values));
+  const current = Math.round(latest.seatRate * 100);
+  drawPanelLabel(ctx, "座位占用", `当前 ${current}%  波动 ${min}% - ${max}%`, rect.x, rect.y);
+
+  const bar = { x: rect.x + 104, y: rect.y + 5, w: rect.w - 104, h: 22 };
+  const gradient = ctx.createLinearGradient(bar.x, 0, bar.x + bar.w, 0);
+  gradient.addColorStop(0, "#d9f99d");
+  gradient.addColorStop(0.48, "#10b981");
+  gradient.addColorStop(1, "#047857");
+  ctx.fillStyle = "rgba(115,128,150,.12)";
+  roundRect2d(ctx, bar.x, bar.y, bar.w, bar.h, 9);
   ctx.fill();
-
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 4;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
+  ctx.fillStyle = gradient;
+  roundRect2d(ctx, bar.x, bar.y, bar.w * latest.seatRate, bar.h, 9);
+  ctx.fill();
+  const markerX = bar.x + bar.w * latest.seatRate;
+  ctx.fillStyle = "#172033";
   ctx.beginPath();
-  points.forEach((point, index) => {
-    if (index === 0) ctx.moveTo(point.x, point.y);
-    else ctx.lineTo(point.x, point.y);
-  });
-  ctx.stroke();
+  ctx.arc(markerX, bar.y + bar.h / 2, 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawMiniBadge(ctx, x, y, color, text) {
+  ctx.save();
+  ctx.font = "800 12px Microsoft YaHei UI";
+  const w = ctx.measureText(text).width + 20;
+  ctx.fillStyle = "rgba(255,255,255,.95)";
+  roundRect2d(ctx, x, y, w, 24, 12);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x + 10, y + 12, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#172033";
+  ctx.textAlign = "left";
+  ctx.fillText(text, x + 17, y + 16);
+  ctx.restore();
+}
+
+function drawSoftGrid(ctx, rect, rows) {
+  ctx.strokeStyle = "rgba(115,128,150,.14)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= rows; i += 1) {
+    const y = rect.y + rect.h * i / rows;
+    ctx.beginPath();
+    ctx.moveTo(rect.x, y);
+    ctx.lineTo(rect.x + rect.w, y);
+    ctx.stroke();
+  }
 }
 
 function drawWindowChart(canvas, loads) {
