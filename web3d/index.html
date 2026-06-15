@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>北京交通大学就餐虚拟仿真系统</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="scene"></canvas>
+
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Virtual Cafeteria Simulation</p>
+          <h1>北京交通大学就餐虚拟仿真系统</h1>
+        </div>
+        <div class="runtime">
+          <span id="clock">00:00</span>
+          <span id="statusText">运行中</span>
+        </div>
+      </section>
+
+      <aside class="dashboard">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">Realtime Monitor</p>
+            <h2>仿真监控面板</h2>
+          </div>
+          <button id="resetBtn" class="icon-button" title="重置仿真">↻</button>
+        </div>
+
+        <div class="metrics">
+          <article class="metric blue">
+            <span>系统人数</span>
+            <strong id="activeCount">0</strong>
+          </article>
+          <article class="metric amber">
+            <span>排队人数</span>
+            <strong id="queueCount">0</strong>
+          </article>
+          <article class="metric green">
+            <span>座位占用</span>
+            <strong id="seatRate">0%</strong>
+          </article>
+          <article class="metric violet">
+            <span>已完成取餐</span>
+            <strong id="servedCount">0</strong>
+          </article>
+        </div>
+
+        <div class="chart-card">
+          <div class="card-heading">
+            <h3>实时趋势</h3>
+            <span>最近 180 帧</span>
+          </div>
+          <canvas id="trendChart" width="640" height="240"></canvas>
+          <div class="legend">
+            <span><i class="blue-dot"></i>系统人数</span>
+            <span><i class="amber-dot"></i>排队+服务</span>
+            <span><i class="green-dot"></i>座位占用率</span>
+          </div>
+        </div>
+
+        <div class="chart-card compact">
+          <div class="card-heading">
+            <h3>窗口负载</h3>
+            <span>当前队列</span>
+          </div>
+          <canvas id="windowChart" width="640" height="170"></canvas>
+        </div>
+
+        <div class="chart-card compact">
+          <div class="card-heading">
+            <h3>学生状态分布</h3>
+            <span id="throughput">0/min</span>
+          </div>
+          <canvas id="stateChart" width="640" height="150"></canvas>
+        </div>
+
+        <div class="controls">
+          <button id="pauseBtn">暂停</button>
+          <button id="cameraBtn">俯视</button>
+          <label>
+            速度
+            <input id="speedRange" type="range" min="0.5" max="3" step="0.1" value="1.3" />
+          </label>
+          <label class="toggle">
+            <input id="heatToggle" type="checkbox" checked />
+            热力区域
+          </label>
+        </div>
+      </aside>
+
+      <section class="bottom-strip">
+        <div>
+          <span class="label">流程</span>
+          <strong>入口 → 取餐窗口排队 → 选座就餐 → 休息/离开</strong>
+        </div>
+        <div>
+          <span class="label">交互</span>
+          <strong>鼠标拖拽旋转，滚轮缩放，右键平移</strong>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

@@ -21,3 +21,6 @@ report_render_check/
 *.tmp
 *.log
 ~$*
+
+# Web preview screenshots
+web3d/preview*.png
