@@ -229,8 +229,8 @@ function buildCafeteria() {
 
   addLabel("入口", new THREE.Vector3(layout.entrance.x, 3.2, layout.entrance.z), 0.65, "#166534");
   addLabel("出口", new THREE.Vector3(layout.exit.x, 3.2, layout.exit.z), 0.65, "#9a3412");
-  addLabel("一层底板", new THREE.Vector3(-25, 3.2, 16.4), 0.55, "#0f766e");
-  addLabel("一层取餐区", new THREE.Vector3(-18, 4.2, -15.5), 0.58, "#1d4ed8");
+  addLabel("L1 一层底板", new THREE.Vector3(-25, 4.2, 16.4), 0.72, "#0f766e");
+  addLabel("L1 一层取餐区", new THREE.Vector3(-18, 5.0, -15.5), 0.72, "#1d4ed8");
   addLabel("等座区", new THREE.Vector3(layout.waitingBase.x, 2.6, layout.waitingBase.z + 2.6), 0.55, "#854d0e");
   addLabel("休息区", new THREE.Vector3(layout.rest.x, 2.6, layout.rest.z + 3.6), 0.55, "#1d4ed8");
 
@@ -262,7 +262,9 @@ function buildCafeteria() {
   addLabel("A 区 近窗口", new THREE.Vector3(3.4, 3, -14.5), 0.5, "#1d4ed8");
   addLabel("B 区 安静区", new THREE.Vector3(3.4, 3, -2.5), 0.5, "#047857");
   addLabel("C 区 大桌区", new THREE.Vector3(19.5, 3, -12.5), 0.5, "#6d28d9");
-  addLabel("二层复制楼板", new THREE.Vector3(18, layout.upperFloorY + 3.1, -10.4), 0.58, "#1e40af");
+  addLabel("L2 二层复制楼板", new THREE.Vector3(18, layout.upperFloorY + 4.0, -10.4), 0.78, "#1e40af");
+  addLabel("D 区 二层座位", new THREE.Vector3(11, layout.upperFloorY + 2.8, -9.6), 0.5, "#9a3412");
+  addLabel("E 区 二层座位", new THREE.Vector3(23, layout.upperFloorY + 2.8, 2.5), 0.5, "#1d4ed8");
 }
 
 function buildSecondFloor() {
@@ -384,7 +386,7 @@ function createStudent({ pos, target, state, windowIndex = -1, seatIndex = -1, e
   const palette = [colors.blue, colors.green, colors.violet, colors.red];
   const student = {
     id: sim.nextId++,
-    type: Math.floor(Math.random() * 3),
+    type: Math.floor(Math.random() * 5),
     color: palette[Math.floor(Math.random() * palette.length)],
     pos: pos.clone(),
     target: target.clone(),
@@ -396,6 +398,7 @@ function createStudent({ pos, target, state, windowIndex = -1, seatIndex = -1, e
     eatUntil,
     restUntil,
     trail: [],
+    route: [],
   };
   student.mesh = makeStudentMesh(student);
   sim.students.push(student);
@@ -435,9 +438,11 @@ function seedInitialCrowd() {
     }
   });
 
-  for (let i = 0; i < 9; i += 1) {
-    const seat = layout.seats.find((candidate) => !candidate.occupant);
-    if (!seat) break;
+  const starterSeats = [
+    ...layout.seats.filter((candidate) => candidate.floorY === 0).slice(0, 7),
+    ...layout.seats.filter((candidate) => candidate.floorY > 0).slice(0, 6),
+  ];
+  starterSeats.forEach((seat) => {
     const seatIndex = layout.seats.indexOf(seat);
     const student = createStudent({
       pos: seat.pos,
@@ -449,7 +454,7 @@ function seedInitialCrowd() {
     seat.occupant = student;
     seat.mesh.material.color.setHex(0x54a3ff);
     seat.mesh.position.y = seat.floorY + 0.48;
-  }
+  });
 
   for (let i = 0; i < 3; i += 1) {
     const pos = layout.rest.clone().add(new THREE.Vector3(i * 1.6 - 2, 0, Math.random() * 2 - 1));
@@ -463,13 +468,18 @@ function seedInitialCrowd() {
 }
 
 function findSeat(student) {
-  const prefer = student.type === 0 ? "A" : student.type === 1 ? "B" : "C";
+  const preferences = ["A", "B", "C", "D", "E"];
+  const prefer = preferences[student.type % preferences.length];
   let bestIndex = -1;
   let bestScore = Infinity;
   layout.seats.forEach((seat, index) => {
     if (seat.occupant) return;
-    const zonePenalty = seat.zone === prefer ? 0 : 5;
-    const score = seat.pos.distanceTo(layout.pickup) + zonePenalty + Math.random() * 1.4;
+    const sameZone = seat.zone === prefer;
+    const prefersUpperFloor = prefer === "D" || prefer === "E";
+    const sameFloor = prefersUpperFloor === (seat.floorY > 0);
+    const zonePenalty = sameZone ? 0 : sameFloor ? 2.2 : 7.5;
+    const distanceWeight = seat.floorY > 0 ? 0.24 : 0.42;
+    const score = seat.pos.distanceTo(layout.pickup) * distanceWeight + zonePenalty + Math.random() * 1.2;
     if (score < bestScore) {
       bestIndex = index;
       bestScore = score;
@@ -482,6 +492,11 @@ function moveToward(student, dt) {
   const distance = student.pos.distanceTo(student.target);
   if (distance < 0.03) {
     student.pos.copy(student.target);
+    student.mesh.position.copy(student.pos);
+    if (student.route.length > 0) {
+      student.target = student.route.shift();
+      return false;
+    }
     return true;
   }
   const step = Math.min(distance, student.speed * sim.speed * dt);
@@ -521,9 +536,33 @@ function assignSeat(student) {
   seat.occupant = student;
   student.seatIndex = seatIndex;
   student.state = "toSeat";
-  student.target = seat.pos.clone();
+  if (seat.floorY > 0) {
+    student.target = new THREE.Vector3(23.5, 0, 12.8);
+    student.route = [
+      new THREE.Vector3(26, layout.upperFloorY * 0.52, 9.8),
+      new THREE.Vector3(29, layout.upperFloorY, 5.4),
+      seat.pos.clone(),
+    ];
+  } else {
+    student.target = seat.pos.clone();
+    student.route = [];
+  }
   seat.mesh.material.color.setHex(0x54a3ff);
   seat.mesh.position.y = seat.floorY + 0.48;
+}
+
+function setGroundTarget(student, destination) {
+  if (student.pos.y > 1) {
+    student.target = new THREE.Vector3(29, layout.upperFloorY, 5.4);
+    student.route = [
+      new THREE.Vector3(26, layout.upperFloorY * 0.52, 9.8),
+      new THREE.Vector3(23.5, 0, 12.8),
+      destination.clone(),
+    ];
+  } else {
+    student.target = destination.clone();
+    student.route = [];
+  }
 }
 
 function updateSimulation(dt) {
@@ -563,17 +602,17 @@ function updateSimulation(dt) {
         }
         if (Math.random() < 0.35) {
           student.state = "resting";
-          student.target = layout.rest.clone().add(new THREE.Vector3(Math.random() * 8 - 4, 0, Math.random() * 3 - 1.5));
+          setGroundTarget(student, layout.rest.clone().add(new THREE.Vector3(Math.random() * 8 - 4, 0, Math.random() * 3 - 1.5)));
           student.restUntil = sim.time + 2 + Math.random() * 4;
           sim.rested += 1;
         } else {
           student.state = "leaving";
-          student.target = layout.exit.clone();
+          setGroundTarget(student, layout.exit);
         }
       }
     } else if (student.state === "resting" && sim.time >= student.restUntil && arrived) {
       student.state = "leaving";
-      student.target = layout.exit.clone();
+      setGroundTarget(student, layout.exit);
     } else if (student.state === "leaving" && arrived) {
       student.state = "done";
       sim.left += 1;
